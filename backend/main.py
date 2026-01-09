@@ -206,7 +206,7 @@ Review:
     logger.error("Failed to predict rating after all retries")
     return None, None
 
-def generate_user_response(rating: int, review_text: str) -> str:
+def generate_user_response(rating: int, review_text: str, retries: int = 3) -> str:
     """Generate a user-facing response based on the review"""
     prompt = f"""
 You are a helpful customer service representative responding to a customer review.
@@ -224,22 +224,32 @@ Generate a brief, empathetic, and professional response (2-3 sentences) that:
 Return ONLY the response text, no additional formatting.
 """
     
-    try:
-        response = client.chat.completions.create(
-            model="openai/gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a professional customer service representative."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=200
-        )
-        result = response.choices[0].message.content.strip()
-        logger.info(f"Successfully generated user response")
-        return result
-    except Exception as e:
-        logger.error(f"Error generating user response: {e}", exc_info=True)
-        return f"Thank you for your {rating}-star review. We appreciate your feedback and will use it to improve our services."
+    for attempt in range(retries):
+        try:
+            response = client.chat.completions.create(
+                model="openai/gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a professional customer service representative."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=200
+            )
+            result = response.choices[0].message.content.strip()
+            if result:
+                logger.info(f"Successfully generated user response")
+                return result
+            else:
+                raise ValueError("Empty response from API")
+        except Exception as e:
+            logger.warning(f"User response generation error (attempt {attempt+1}/{retries}): {e}")
+            if attempt < retries - 1:
+                time.sleep(1)
+                continue
+    
+    # Fallback if all retries fail
+    logger.error("All user response generation attempts failed, using fallback")
+    return f"Thank you for your {rating}-star review. We appreciate your feedback and will use it to improve our services."
 
 def generate_summary(review_text: str, retries: int = 3) -> str:
     """Generate a concise summary of the review"""
@@ -280,7 +290,7 @@ Return ONLY the summary sentence, no additional text.
     basic_summary = " ".join(words) + "..."
     return basic_summary if len(basic_summary) < 100 else "Review summary unavailable."
 
-def generate_recommended_actions(rating: int, review_text: str) -> str:
+def generate_recommended_actions(rating: int, review_text: str, retries: int = 3) -> str:
     """Generate recommended actions based on the review"""
     prompt = f"""
 Based on this customer review, suggest 2-3 specific, actionable steps the business should take.
@@ -296,22 +306,32 @@ If the rating is negative (1-2), suggest ways to address the issues.
 Return ONLY the bulleted list, no additional text.
 """
     
-    try:
-        response = client.chat.completions.create(
-            model="openai/gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a business improvement consultant."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.5,
-            max_tokens=200
-        )
-        result = response.choices[0].message.content.strip()
-        logger.info(f"Successfully generated recommended actions")
-        return result
-    except Exception as e:
-        logger.error(f"Error generating recommended actions: {e}", exc_info=True)
-        return "- Review feedback internally\n- Follow up with customer if needed\n- Implement improvements based on feedback"
+    for attempt in range(retries):
+        try:
+            response = client.chat.completions.create(
+                model="openai/gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a business improvement consultant."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.5,
+                max_tokens=200
+            )
+            result = response.choices[0].message.content.strip()
+            if result:
+                logger.info(f"Successfully generated recommended actions")
+                return result
+            else:
+                raise ValueError("Empty response from API")
+        except Exception as e:
+            logger.warning(f"Recommended actions generation error (attempt {attempt+1}/{retries}): {e}")
+            if attempt < retries - 1:
+                time.sleep(1)
+                continue
+    
+    # Fallback if all retries fail
+    logger.error("All recommended actions generation attempts failed, using fallback")
+    return "- Review feedback internally\n- Follow up with customer if needed\n- Implement improvements based on feedback"
 
 # =========================
 # API ENDPOINTS
