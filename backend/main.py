@@ -241,7 +241,7 @@ Return ONLY the response text, no additional formatting.
         logger.error(f"Error generating user response: {e}", exc_info=True)
         return f"Thank you for your {rating}-star review. We appreciate your feedback and will use it to improve our services."
 
-def generate_summary(review_text: str) -> str:
+def generate_summary(review_text: str, retries: int = 3) -> str:
     """Generate a concise summary of the review"""
     prompt = f"""
 Summarize the following customer review in one clear, concise sentence (max 20 words).
@@ -251,25 +251,34 @@ Review: "{review_text}"
 Return ONLY the summary sentence, no additional text.
 """
     
-    try:
-        response = client.chat.completions.create(
-            model="openai/gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a concise summarizer."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3,
-            max_tokens=50
-        )
-        result = response.choices[0].message.content.strip()
-        logger.info(f"Successfully generated summary: {result[:50]}...")
-        return result
-    except Exception as e:
-        logger.error(f"Error generating summary: {e}", exc_info=True)
-        # Try to create a basic summary from the review
-        words = review_text.split()[:15]
-        basic_summary = " ".join(words) + "..."
-        return basic_summary if len(basic_summary) < 100 else "Review summary unavailable."
+    for attempt in range(retries):
+        try:
+            response = client.chat.completions.create(
+                model="openai/gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a concise summarizer."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=50
+            )
+            result = response.choices[0].message.content.strip()
+            if result:
+                logger.info(f"Successfully generated summary: {result[:50]}...")
+                return result
+            else:
+                raise ValueError("Empty response from API")
+        except Exception as e:
+            logger.warning(f"Summary generation error (attempt {attempt+1}/{retries}): {e}")
+            if attempt < retries - 1:
+                time.sleep(1)
+                continue
+    
+    # If all retries failed, create a basic summary
+    logger.error("All summary generation attempts failed, using fallback")
+    words = review_text.split()[:15]
+    basic_summary = " ".join(words) + "..."
+    return basic_summary if len(basic_summary) < 100 else "Review summary unavailable."
 
 def generate_recommended_actions(rating: int, review_text: str) -> str:
     """Generate recommended actions based on the review"""
