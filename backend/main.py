@@ -209,19 +209,21 @@ Review:
 def generate_user_response(rating: int, review_text: str, retries: int = 3) -> str:
     """Generate a user-facing response based on the review"""
     prompt = f"""
-You are a helpful customer service representative responding to a customer review.
+You are a warm and professional customer service representative responding to a customer review.
 
-Customer Rating: {rating}/5 stars
-Customer Review: "{review_text}"
+Customer gave us {rating} out of 5 stars.
+Their review: "{review_text}"
 
-Generate a brief, empathetic, and professional response (2-3 sentences) that:
-- Acknowledges their feedback
-- Shows appreciation for their input
-- If rating is low (1-2), expresses concern and willingness to improve
-- If rating is high (4-5), thanks them warmly
-- If rating is neutral (3), acknowledges their feedback and invites further engagement
+Write a personalized, natural response (2-3 sentences) that:
+- Specifically mentions something from their review (food quality, service, atmosphere, etc.)
+- Shows genuine appreciation
+- If {rating} stars (low rating): Express sincere concern, acknowledge the issues they mentioned, and offer to make it right
+- If {rating} stars (high rating): Thank them warmly, mention what they liked, and invite them back
+- If {rating} stars (neutral): Acknowledge their balanced feedback and show you value their input
 
-Return ONLY the response text, no additional formatting.
+Make it sound natural and human, not robotic. Reference specific details from their review.
+
+Write ONLY the response, nothing else.
 """
     
     for attempt in range(retries):
@@ -293,17 +295,21 @@ Return ONLY the summary sentence, no additional text.
 def generate_recommended_actions(rating: int, review_text: str, retries: int = 3) -> str:
     """Generate recommended actions based on the review"""
     prompt = f"""
-Based on this customer review, suggest 2-3 specific, actionable steps the business should take.
+Analyze this customer review and suggest 2-3 specific, actionable steps the business should take.
 
-Rating: {rating}/5 stars
+Customer Rating: {rating}/5 stars
 Review: "{review_text}"
 
-Format as a bulleted list (one action per line, prefixed with "-").
-Focus on practical, implementable actions.
-If the rating is positive (4-5), suggest ways to maintain or enhance the experience.
-If the rating is negative (1-2), suggest ways to address the issues.
+Based on what the customer mentioned, provide practical recommendations:
+- If rating is 4-5 stars: Suggest ways to maintain excellence and enhance what they loved
+- If rating is 1-2 stars: Suggest concrete steps to address the specific issues mentioned
+- If rating is 3 stars: Suggest improvements to move from "okay" to "great"
 
-Return ONLY the bulleted list, no additional text.
+Format as a bulleted list (each action on a new line, start with "-").
+Be specific - reference what they mentioned (service speed, food quality, wait times, etc.).
+Make actions practical and implementable.
+
+Write ONLY the bulleted list, nothing else.
 """
     
     for attempt in range(retries):
