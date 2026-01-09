@@ -38,13 +38,15 @@ app.add_middleware(
 api_key = os.environ.get("OPENROUTER_API_KEY", "")
 if not api_key:
     logger.error("OPENROUTER_API_KEY not found in environment variables!")
+    logger.error("Please set OPENROUTER_API_KEY in Render environment variables")
+    # Don't create client if no key - will fail gracefully
+    client = None
 else:
-    logger.info(f"OpenRouter API key found (length: {len(api_key)})")
-
-client = OpenAI(
-    api_key=api_key,
-    base_url="https://openrouter.ai/api/v1"
-)
+    logger.info(f"OpenRouter API key found (length: {len(api_key)}, starts with: {api_key[:10]}...)")
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://openrouter.ai/api/v1"
+    )
 
 # Database setup
 DB_PATH = "feedback.db"
@@ -165,8 +167,13 @@ Review:
 \"\"\"{review_text}\"\"\"
 """
     
+    if not client:
+        logger.error("OpenRouter client not initialized - API key missing")
+        return None, None
+    
     for attempt in range(retries):
         try:
+            logger.info(f"Attempting to predict rating (attempt {attempt+1}/{retries})")
             response = client.chat.completions.create(
                 model="openai/gpt-3.5-turbo",
                 messages=[
@@ -231,6 +238,10 @@ Make it sound natural and human, not robotic. Reference specific details from th
 
 Write ONLY the response, nothing else.
 """
+    
+    if not client:
+        logger.error("OpenRouter client not initialized - API key missing")
+        return f"[API Key Not Configured] Thank you for your {rating}-star review. We appreciate your feedback."
     
     for attempt in range(retries):
         try:
@@ -342,8 +353,13 @@ Make actions practical and implementable.
 Write ONLY the bulleted list, nothing else.
 """
     
+    if not client:
+        logger.error("OpenRouter client not initialized - API key missing")
+        return "[API Key Not Configured] - Review feedback internally\n- Follow up with customer if needed"
+    
     for attempt in range(retries):
         try:
+            logger.info(f"Attempting to generate recommended actions (attempt {attempt+1}/{retries})")
             response = client.chat.completions.create(
                 model="openai/gpt-3.5-turbo",
                 messages=[
