@@ -396,23 +396,10 @@ async def submit_review(submission: ReviewSubmission):
         
         # Generate AI responses (with error handling for each)
         logger.info("Generating AI responses...")
-        try:
-            ai_response = generate_user_response(submission.rating, submission.review_text)
-        except Exception as e:
-            logger.error(f"Failed to generate user response: {e}")
-            ai_response = f"Thank you for your {submission.rating}-star review. We appreciate your feedback."
-        
-        try:
-            ai_summary = generate_summary(submission.review_text)
-        except Exception as e:
-            logger.error(f"Failed to generate summary: {e}")
-            ai_summary = "Review summary unavailable."
-        
-        try:
-            ai_actions = generate_recommended_actions(submission.rating, submission.review_text)
-        except Exception as e:
-            logger.error(f"Failed to generate recommended actions: {e}")
-            ai_actions = "- Review feedback internally\n- Follow up with customer if needed"
+        # These functions handle their own errors and retries, so we don't need try-except here
+        ai_response = generate_user_response(submission.rating, submission.review_text)
+        ai_summary = generate_summary(submission.review_text)
+        ai_actions = generate_recommended_actions(submission.rating, submission.review_text)
         
         # Store in database
         try:
@@ -553,7 +540,41 @@ async def get_submissions():
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+    api_key_status = "configured" if os.environ.get("OPENROUTER_API_KEY") else "missing"
+    return {
+        "status": "healthy", 
+        "timestamp": datetime.now().isoformat(),
+        "api_key": api_key_status
+    }
+
+@app.get("/api/test-ai")
+async def test_ai():
+    """Test AI generation endpoint"""
+    try:
+        test_review = "The food was amazing and service was excellent!"
+        
+        # Test summary generation
+        logger.info("Testing AI summary generation...")
+        summary = generate_summary(test_review, retries=1)
+        
+        # Test user response
+        logger.info("Testing AI user response generation...")
+        response = generate_user_response(5, test_review, retries=1)
+        
+        return {
+            "status": "success",
+            "summary": summary,
+            "response": response,
+            "api_key_present": bool(os.environ.get("OPENROUTER_API_KEY"))
+        }
+    except Exception as e:
+        logger.error(f"AI test failed: {e}", exc_info=True)
+        return {
+            "status": "failed",
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "api_key_present": bool(os.environ.get("OPENROUTER_API_KEY"))
+        }
 
 @app.get("/")
 async def root():
