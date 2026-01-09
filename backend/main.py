@@ -231,11 +231,11 @@ Write ONLY the response, nothing else.
             response = client.chat.completions.create(
                 model="openai/gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a professional customer service representative."},
+                    {"role": "system", "content": "You are a warm, empathetic customer service representative who writes natural, personalized responses."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.7,
-                max_tokens=200
+                temperature=0.8,
+                max_tokens=250
             )
             result = response.choices[0].message.content.strip()
             if result:
@@ -268,11 +268,11 @@ Return ONLY the summary sentence, no additional text.
             response = client.chat.completions.create(
                 model="openai/gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a concise summarizer."},
+                    {"role": "system", "content": "You are an expert at creating natural, concise summaries that capture the essence of customer feedback."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.3,
-                max_tokens=50
+                temperature=0.5,
+                max_tokens=80
             )
             result = response.choices[0].message.content.strip()
             if result:
@@ -317,11 +317,11 @@ Write ONLY the bulleted list, nothing else.
             response = client.chat.completions.create(
                 model="openai/gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a business improvement consultant."},
+                    {"role": "system", "content": "You are an expert business consultant who provides specific, actionable recommendations based on customer feedback."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.5,
-                max_tokens=200
+                temperature=0.6,
+                max_tokens=250
             )
             result = response.choices[0].message.content.strip()
             if result:
