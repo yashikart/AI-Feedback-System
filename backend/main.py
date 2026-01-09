@@ -228,6 +228,8 @@ Write ONLY the response, nothing else.
     
     for attempt in range(retries):
         try:
+            logger.info(f"Attempting to generate user response (attempt {attempt+1}/{retries})")
+            
             response = client.chat.completions.create(
                 model="openai/gpt-3.5-turbo",
                 messages=[
@@ -237,21 +239,30 @@ Write ONLY the response, nothing else.
                 temperature=0.8,
                 max_tokens=250
             )
+            
             result = response.choices[0].message.content.strip()
-            if result:
-                logger.info(f"Successfully generated user response")
+            if result and len(result) > 20:  # Ensure we got a real response
+                logger.info(f"Successfully generated user response: {result[:100]}...")
                 return result
             else:
-                raise ValueError("Empty response from API")
+                logger.warning(f"Received empty or too short response: {result}")
+                raise ValueError(f"Empty or invalid response from API: {result}")
         except Exception as e:
-            logger.warning(f"User response generation error (attempt {attempt+1}/{retries}): {e}")
+            error_msg = str(e)
+            logger.error(f"User response generation error (attempt {attempt+1}/{retries}): {error_msg}")
+            logger.error(f"Error type: {type(e).__name__}")
+            if "api" in error_msg.lower() or "key" in error_msg.lower():
+                logger.error("Possible API key or authentication issue")
             if attempt < retries - 1:
-                time.sleep(1)
+                time.sleep(2)  # Longer wait between retries
                 continue
     
     # Fallback if all retries fail
     logger.error("All user response generation attempts failed, using fallback")
-    return f"Thank you for your {rating}-star review. We appreciate your feedback and will use it to improve our services."
+    logger.error(f"Rating: {rating}, Review length: {len(review_text)}")
+    logger.error(f"API Key present: {bool(os.environ.get('OPENROUTER_API_KEY'))}")
+    # Return a message indicating failure so we know it's not AI-generated
+    return f"[AI Response Generation Failed - Check Logs] Thank you for your {rating}-star review. We appreciate your feedback."
 
 def generate_summary(review_text: str, retries: int = 3) -> str:
     """Generate a concise summary of the review"""
@@ -265,6 +276,9 @@ Return ONLY the summary sentence, no additional text.
     
     for attempt in range(retries):
         try:
+            logger.info(f"Attempting to generate summary (attempt {attempt+1}/{retries})")
+            logger.info(f"Review text preview: {review_text[:100]}...")
+            
             response = client.chat.completions.create(
                 model="openai/gpt-3.5-turbo",
                 messages=[
@@ -274,23 +288,30 @@ Return ONLY the summary sentence, no additional text.
                 temperature=0.5,
                 max_tokens=80
             )
+            
             result = response.choices[0].message.content.strip()
-            if result:
-                logger.info(f"Successfully generated summary: {result[:50]}...")
+            if result and len(result) > 10:  # Ensure we got a real response
+                logger.info(f"Successfully generated summary: {result}")
                 return result
             else:
-                raise ValueError("Empty response from API")
+                logger.warning(f"Received empty or too short response: {result}")
+                raise ValueError(f"Empty or invalid response from API: {result}")
         except Exception as e:
-            logger.warning(f"Summary generation error (attempt {attempt+1}/{retries}): {e}")
+            error_msg = str(e)
+            logger.error(f"Summary generation error (attempt {attempt+1}/{retries}): {error_msg}")
+            logger.error(f"Error type: {type(e).__name__}")
+            if "api" in error_msg.lower() or "key" in error_msg.lower():
+                logger.error("Possible API key or authentication issue")
             if attempt < retries - 1:
-                time.sleep(1)
+                time.sleep(2)  # Longer wait between retries
                 continue
     
-    # If all retries failed, create a basic summary
+    # If all retries failed, log detailed error
     logger.error("All summary generation attempts failed, using fallback")
-    words = review_text.split()[:15]
-    basic_summary = " ".join(words) + "..."
-    return basic_summary if len(basic_summary) < 100 else "Review summary unavailable."
+    logger.error(f"Review text length: {len(review_text)}")
+    logger.error(f"API Key present: {bool(os.environ.get('OPENROUTER_API_KEY'))}")
+    # Don't use hardcoded fallback - return error message so we know it failed
+    return f"[AI Summary Generation Failed - Check Logs] Review about: {review_text[:50]}..."
 
 def generate_recommended_actions(rating: int, review_text: str, retries: int = 3) -> str:
     """Generate recommended actions based on the review"""
