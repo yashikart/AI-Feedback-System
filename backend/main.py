@@ -232,12 +232,13 @@ Return ONLY the response text, no additional formatting.
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
-            max_tokens=200,
-            timeout=30
+            max_tokens=200
         )
-        return response.choices[0].message.content.strip()
+        result = response.choices[0].message.content.strip()
+        logger.info(f"Successfully generated user response")
+        return result
     except Exception as e:
-        logger.error(f"Error generating user response: {e}")
+        logger.error(f"Error generating user response: {e}", exc_info=True)
         return f"Thank you for your {rating}-star review. We appreciate your feedback and will use it to improve our services."
 
 def generate_summary(review_text: str) -> str:
@@ -258,13 +259,17 @@ Return ONLY the summary sentence, no additional text.
                 {"role": "user", "content": prompt}
             ],
             temperature=0.3,
-            max_tokens=50,
-            timeout=30
+            max_tokens=50
         )
-        return response.choices[0].message.content.strip()
+        result = response.choices[0].message.content.strip()
+        logger.info(f"Successfully generated summary: {result[:50]}...")
+        return result
     except Exception as e:
-        logger.error(f"Error generating summary: {e}")
-        return "Review summary unavailable."
+        logger.error(f"Error generating summary: {e}", exc_info=True)
+        # Try to create a basic summary from the review
+        words = review_text.split()[:15]
+        basic_summary = " ".join(words) + "..."
+        return basic_summary if len(basic_summary) < 100 else "Review summary unavailable."
 
 def generate_recommended_actions(rating: int, review_text: str) -> str:
     """Generate recommended actions based on the review"""
@@ -290,12 +295,13 @@ Return ONLY the bulleted list, no additional text.
                 {"role": "user", "content": prompt}
             ],
             temperature=0.5,
-            max_tokens=200,
-            timeout=30
+            max_tokens=200
         )
-        return response.choices[0].message.content.strip()
+        result = response.choices[0].message.content.strip()
+        logger.info(f"Successfully generated recommended actions")
+        return result
     except Exception as e:
-        logger.error(f"Error generating recommended actions: {e}")
+        logger.error(f"Error generating recommended actions: {e}", exc_info=True)
         return "- Review feedback internally\n- Follow up with customer if needed\n- Implement improvements based on feedback"
 
 # =========================
