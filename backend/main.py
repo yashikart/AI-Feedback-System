@@ -35,8 +35,14 @@ app.add_middleware(
 )
 
 # Initialize OpenRouter client
+api_key = os.environ.get("OPENROUTER_API_KEY", "")
+if not api_key:
+    logger.error("OPENROUTER_API_KEY not found in environment variables!")
+else:
+    logger.info(f"OpenRouter API key found (length: {len(api_key)})")
+
 client = OpenAI(
-    api_key=os.environ.get("OPENROUTER_API_KEY", ""),
+    api_key=api_key,
     base_url="https://openrouter.ai/api/v1"
 )
 
@@ -267,11 +273,14 @@ Write ONLY the response, nothing else.
 def generate_summary(review_text: str, retries: int = 3) -> str:
     """Generate a concise summary of the review"""
     prompt = f"""
-Summarize the following customer review in one clear, concise sentence (max 20 words).
+Read this customer review and create a natural, concise one-sentence summary (15-25 words) that captures the main points.
 
 Review: "{review_text}"
 
-Return ONLY the summary sentence, no additional text.
+Focus on: what they liked/disliked, key issues mentioned, overall sentiment.
+Make it sound natural, not robotic.
+
+Write ONLY the summary sentence, nothing else.
 """
     
     for attempt in range(retries):
