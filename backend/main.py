@@ -484,6 +484,19 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
+@app.get("/")
+async def root():
+    """Root endpoint"""
+    return {
+        "message": "AI Feedback System API",
+        "endpoints": {
+            "submit": "/api/submit",
+            "submissions": "/api/submissions",
+            "health": "/api/health",
+            "docs": "/docs"
+        }
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
