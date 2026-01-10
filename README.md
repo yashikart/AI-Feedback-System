@@ -6,6 +6,87 @@ A production-ready web application with two dashboards for collecting and managi
 **Email:** riyashika20@gmail.com
 
 ---
+⚠️ **Note:** This project is deployed using **free-tier services**, so some delays are expected.
+
+---
+
+## 🚀 Live Deployment Links
+
+### 🔄 Backend (FastAPI – Free Tier)
+👉 https://ai-feedback-system-backend-yashika.onrender.com/
+
+### 👤 User Dashboard
+👉 https://ai-feedback-system-frontend-yashika.onrender.com/
+
+### 🛠️ Admin Dashboard (All Reviews)
+👉 https://ai-feedback-system-frontend-yashika.onrender.com/admin
+
+---
+
+## 🧭 How to Use (IMPORTANT)
+
+### Step 1: Refresh / Wake Up Backend
+Before opening the frontend, **open the backend URL once**:
+
+https://ai-feedback-system-backend-yashika.onrender.com/
+
+⏳ Since this is a **free-tier Render service**, the backend may sleep when inactive.  
+The first request can take **30–60 seconds** — this is normal.
+
+---
+
+### Step 2: Open User Dashboard
+After the backend is active, open:
+
+https://ai-feedback-system-frontend-yashika.onrender.com/
+
+**User Features:**
+- Submit feedback / reviews
+- Get AI-predicted star ratings (1–5)
+- View feedback results instantly
+
+---
+
+### Step 3: Open Admin Dashboard
+To view all submitted reviews:
+
+https://ai-feedback-system-frontend-yashika.onrender.com/admin
+
+**Admin Features:**
+- View all user reviews
+- See AI-generated ratings
+- Monitor feedback centrally
+
+---
+
+## ⚠️ Free Tier Limitations
+
+- Backend may **sleep after inactivity**
+- First load may be slow
+- If frontend does not load:
+  1. Refresh backend URL
+  2. Wait a few seconds
+  3. Reload frontend page
+
+---
+
+## 🧩 Tech Stack
+
+- **Backend:** FastAPI (Python)
+- **Frontend:** React
+- **AI Model:** LLM-based rating classification
+- **Deployment:** Render (Free Tier)
+
+---
+
+## 📌 Notes
+
+- No local setup required
+- Publicly accessible dashboards
+- Faster response after backend is warmed up
+
+---
+
 
 ## Project Overview
 
